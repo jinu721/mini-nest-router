@@ -59,8 +59,8 @@ nestjs-decorator-under-the-hood/
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/<your-username>/nestjs-decorator-under-the-hood.git
-cd nestjs-decorator-under-the-hood
+git clone https://github.com/jinu721/mini-nest-router.git
+cd mini-nest-router
 ````
 
 2. **Install dependencies**
