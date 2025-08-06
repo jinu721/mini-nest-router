@@ -1,171 +1,214 @@
-# 🧠 NestJS Decorator Under the Hood
+# 🧠 NestJS Decorator Internals with Dependency Injection
 
-A minimal TypeScript project that explains how **NestJS decorators** like `@Controller`, `@Get`, and `@Post` work **internally** using `reflect-metadata`.
+A minimal TypeScript project that explains how **NestJS-style decorators** like `@Controller`, `@Get`, `@Post`, and `@Injectable` work **under the hood** using `reflect-metadata`.
 
-> Learn how NestJS maps routes using metadata and decorators — by building it from scratch!
+> Understand how NestJS handles **routing and dependency injection** – by building a mini version of it from scratch.
 
 ---
 
 ## 📋 Overview
 
-This project helps you understand:
+This project teaches you:
 
-✅ How `@Controller`, `@Get`, and `@Post` decorators actually work.
+✅ How `@Controller`, `@Get`, and `@Post` decorators work.
 
-✅ How NestJS uses `Reflect.defineMetadata()` and `Reflect.getMetadata()` under the hood.
+✅ How NestJS uses `Reflect.defineMetadata()` / `Reflect.getMetadata()`.
 
-✅ How classes and methods are tagged with route information (like base path, HTTP method, etc.).
+✅ How to create a simple **DI (Dependency Injection)** container.
 
-✅ How the app can scan and simulate routing without using Express or Fastify.
+✅ How classes automatically get their dependencies injected.
+
+✅ How controllers and methods are scanned and executed based on metadata.
 
 ---
 
 ## 📚 What You’ll Learn
 
-- How **class and method decorators** work in TypeScript
-- How to use **`reflect-metadata`** to attach and read metadata
-- How frameworks like **NestJS** use decorators to register routes
-- How to simulate route mapping and method execution
+* How to build class & method decorators (`@Controller`, `@Injectable`, etc.)
+* How to attach and read metadata using `reflect-metadata`
+* How NestJS maps HTTP routes using decorator metadata
+* How to simulate basic request handling without Express
+* How to create a recursive dependency injector using TypeScript
 
 ---
 
 ## 📁 Project Structure
 
 ```
-
 nestjs-decorator-under-the-hood/
 ├── src/
-│   └── app.ts              # Main file with decorators and logic
-├── package.json            # Project dependencies and scripts
-├── tsconfig.json           # TypeScript config (with decorator support)
+│   └── app.ts              # All logic and decorators in one file
+├── package.json            # Project dependencies
+├── tsconfig.json           # TypeScript config (with decorators enabled)
 └── README.md               # This file
-
-````
+```
 
 ---
 
-## 🚀 How to Run the Project
+## 🚀 Getting Started
 
 ### 🔧 Prerequisites
 
-- Node.js (v16 or above)
-- TypeScript (`npm install -g typescript`)
-- ts-node (`npm install -g ts-node`)
+* Node.js (v16+)
+* TypeScript (`npm install -g typescript`)
+* ts-node (`npm install -g ts-node`)
 
 ---
 
 ### ▶️ Run the App
 
-1. **Clone the repository**
-
 ```bash
-git clone https://github.com/<your-username>/nestjs-decorator-under-the-hood.git
-cd nestjs-decorator-under-the-hood
-````
+git clone https://github.com/jinu721/mini-nest-router.git
+cd mini-nest-router
 
-2. **Install dependencies**
-
-```bash
 npm install
-```
-
-3. **Run the TypeScript file**
-
-```bash
 npm run start
 ```
 
----
-
-## 🧪 How It Works
-
-1. You define decorators:
-
-   * `@Controller(basePath)` marks a class with a route prefix.
-   * `@Get(path)` and `@Post(path)` mark class methods as HTTP handlers.
-
-2. Decorators use `Reflect.defineMetadata()` to save this info:
-
-   * The class gets a `basePath` tag.
-   * Methods get `method` (GET/POST) and `path`.
-
-3. The `bootstrapControllers()` function:
-
-   * Instantiates the controller
-   * Scans all its methods
-   * Reads the metadata with `Reflect.getMetadata()`
-   * Logs which HTTP method and path maps to which class method
-
----
-
-## 🔍 Sample Output
+Or run manually:
 
 ```bash
-Mapped GET /users/ -> UserController.getAllUsers()
-Returning all users...
-
-Mapped POST /users/ -> UserController.createUser()
-Creating user...
+ts-node src/app.ts
 ```
 
 ---
 
-## 🔧 Sample Code
+## 🧪 What the App Does
 
-Here’s a short version of what the project does:
+1. You define decorators like `@Controller`, `@Get`, `@Post`, and `@Injectable`.
+
+2. The `@Module()` decorator declares which services and controllers to use.
+
+3. The `bootstrapModule()` function:
+
+   * Resolves all services (aka providers) and stores them in a container.
+   * Resolves controllers and injects dependencies automatically.
+   * Scans controller methods and reads `@Get` and `@Post` metadata.
+   * Logs routes and simulates method calls.
+
+4. The `resolve()` function:
+
+   * Uses `Reflect.getMetadata('design:paramtypes', ...)` to read constructor dependencies.
+   * Recursively resolves those dependencies.
+   * Automatically injects them when creating objects.
+
+---
+
+## 🔍 Example Output
+
+```bash
+Resolving dependencies [UserService]
+Resolving dependencies []
+Mapped GET /users/ -> UserController.getAllUsers()
+GET /users -> [ 'user1', 'user2' ]
+Mapped POST /users/ -> UserController.createUser()
+POST /users -> Creating user...
+```
+
+---
+
+## 🧠 Key Concepts
+
+| Concept         | Description                                             |
+| --------------- | ------------------------------------------------------- |
+| `@Controller()` | Adds a base route path to the class                     |
+| `@Get(path)`    | Tags a method to handle GET requests                    |
+| `@Post(path)`   | Tags a method to handle POST requests                   |
+| `@Injectable()` | Marks a class to be available for injection             |
+| `@Module()`     | Defines what to register (controllers and providers)    |
+| `resolve()`     | The DI function that handles recursive injection        |
+| `container`     | Stores all singleton instances to avoid recreating them |
+
+---
+
+## 🧩 Sample Code
+
+### ✅ Controller
 
 ```ts
 @Controller('/users')
 class UserController {
+  constructor(private userService: UserService) {}
+
   @Get('/')
   getAllUsers() {
-    console.log('Returning all users...');
+    const users = this.userService.getUsers();
+    console.log("GET /users ->", users);
   }
 
   @Post('/')
   createUser() {
-    console.log('Creating user...');
+    console.log("POST /users -> Creating user...");
   }
 }
 ```
 
-Under the hood, we’re doing this:
+### ✅ Service
 
 ```ts
-Reflect.defineMetadata('method', 'GET', getAllUsers);
-Reflect.defineMetadata('path', '/', getAllUsers);
+@Injectable()
+class UserService {
+  getUsers() {
+    return ['user1', 'user2'];
+  }
+}
 ```
 
-And reading it like this:
+### ✅ Module
 
 ```ts
-Reflect.getMetadata('method', method); // 'GET'
-Reflect.getMetadata('path', method);   // '/'
+@Module({
+  providers: [UserService],
+  controllers: [UserController],
+})
+class AppModule {}
 ```
 
 ---
 
-## 💡 Possible Improvements
+## ⚙️ Under the Hood
 
-* Add real routing using Express or Fastify
-* Add `@Put`, `@Delete`, `@Patch` decorators
-* Add middleware or guards
-* Implement simple dependency injection
+### Decorators store metadata:
+
+```ts
+Reflect.defineMetadata("basePath", "/users", UserController);
+Reflect.defineMetadata("method", "GET", getAllUsers);
+Reflect.defineMetadata("path", "/", getAllUsers);
+```
+
+### Dependency injection works by:
+
+```ts
+const dependencies = Reflect.getMetadata("design:paramtypes", UserService);
+// [UserRepository] for example
+
+const instance = new UserService(...resolvedDependencies);
+container.set(UserService, instance);
+```
+
+---
+
+## 💡 Suggestions for Improvement
+
+* Add `@Put`, `@Delete`, and `@Patch` decorators
+* Add real Express/Fastify routing
+* Add middleware/guards simulation
+* Add unit tests for route scanning and injection
 * Export route map as JSON
 
 ---
 
 ## 📦 Dependencies
 
-* `typescript`
-* `reflect-metadata`
-* `ts-node` (for running TypeScript without compiling)
+* [`typescript`](https://www.npmjs.com/package/typescript)
+* [`reflect-metadata`](https://www.npmjs.com/package/reflect-metadata)
+* [`ts-node`](https://www.npmjs.com/package/ts-node)
 
 ---
 
 ## 🧾 License
 
-This project is licensed under the **MIT License** – feel free to use, change, or contribute.
+MIT License – Feel free to use, fork, and contribute.
 
 ---
 
@@ -177,5 +220,5 @@ Built with ❤️ by **jinu**
 
 ---
 
-**Happy Coding! 🚀 Learn the internals, not just the syntax.**
+**Happy learning! Dive deep into how frameworks like NestJS actually work.** 🚀
 
