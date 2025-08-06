@@ -38,58 +38,7 @@ function Module(metadata: { providers?: any[]; controllers?: any[] }) {
 
 const container = new Map();
 
-function resolve<T>(target: new (...args: any[]) => T): T {
-  const dependencies = Reflect.getMetadata("design:paramtypes", target) || [];
-  console.log("Resolving dependencies", dependencies);
-  const injections = dependencies.map((dep: any) => {
-    if (!container.has(dep)) {
-      const instance = resolve(dep);
-      container.set(dep, instance);
-    }
-    return container.get(dep);
-  });
-
-  const instance = new target(...injections);
-  container.set(target, instance);
-  return instance;
-}
-
-
-@Injectable()
-class UserService {
-  getUsers() {
-    return ["user1", "user2"];
-  }
-}
-
-@Controller("/users")
-class UserController {
-  constructor(private userService: UserService) {}
-
-  @Get("/")
-  getAllUsers() {
-    const users = this.userService.getUsers();
-    console.log("GET /users ->", users);
-  }
-
-  @Post("/")
-  createUser() {
-    console.log("POST /users -> Creating user...");
-  }
-}
-
-@Module({
-  providers: [UserService],
-  controllers: [UserController],
-})
-class AppModule {}
-
-
-function bootstrapModule(AppModuleClass: any) {
-  const metadata = Reflect.getMetadata("module:metadata", AppModuleClass);
-
-  (metadata.providers || []).forEach((provider: any) => {
-    if (!container.has(provider)) {
+function resolve<T>(target: new (...args: any[]) => T): TDI 
       resolve(provider);
     }
   });
